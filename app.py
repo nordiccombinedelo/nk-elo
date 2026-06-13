@@ -128,54 +128,47 @@ try:
             st.warning("No athletes matched the activity rules on this date.")
 
     # SECTION 3: ATHLETE LIFELINE EXPLORER
-    elif app_mode == "📈 Athlete Lifeline Explorer":
-        st.markdown('<div class="main-title">📈 Athlete Elo Lifeline Career Explorer</div>', unsafe_allow_html=True)
+           # 1. PREPARE IMMUTABLE LISTS TO PREVENT HOVER TEXT COUPLING
+        race_numbers = list(df_ath["Race_No"])
+        elo_after_points = list(df_ath["Elo_After"])
         
-        athlete_list = sorted(df["Name"].unique())
-        selected_athlete = st.selectbox("Select Athlete Profile Name:", athlete_list, index=0)
-        
-        df_ath = df[df["Name"] == selected_athlete].sort_values(by="Date").reset_index(drop=True)
-        df_ath["Race_No"] = range(1, len(df_ath) + 1)
-        
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Career Races", len(df_ath))
-        m2.metric("Peak Career Elo", int(round(df_ath["Elo_After"].max())))
-        m3.metric("Lowest Career Elo", int(round(df_ath["Elo_After"].min())))
-        m4.metric("Last Registered Elo", int(round(df_ath["Elo_After"].iloc[-1])))
-        
-        race_numbers = df_ath["Race_No"].tolist()
-        elo_after_points = df_ath["Elo_After"].tolist()
-        events_list = df_ath["Event"].tolist()
-        dates_clean = df_ath["Date"].dt.strftime("%Y-%m-%d").tolist()
-        ranks_list = df_ath["Rank"].astype(int).tolist()
-        elo_before_list = df_ath["Elo_Before"].round().astype(int).tolist()
-        delta_list = df_ath["Delta_Elo"].round(1).tolist()
-        elo_after_list = df_ath["Elo_After"].round().astype(int).tolist()
+        events_list = list(df_ath["Event"])
+        dates_clean = list(df_ath["Date"].dt.strftime("%Y-%m-%d"))
+        ranks_list = list(df_ath["Rank"].astype(int))
+        elo_before_list = list(df_ath["Elo_Before"].round().astype(int))
+        delta_list = list(df_ath["Delta_Elo"].round(1))
+        elo_after_list = list(df_ath["Elo_After"].round().astype(int))
 
+        # 2. PLOTLY CHART ENGINE WITH SEPARATE EXPLICIT DATA STREAMS
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=race_numbers, 
             y=elo_after_points, 
             mode="lines+markers",
             name="Elo Points", 
-            line=dict(color="#4dadf7", width=3), # Neon blue for dark contrast
+            line=dict(color="#4dadf7", width=3), 
             marker=dict(size=4),
+            # Explicitly layout data using customdata array positions
             hovertemplate=(
                 "<b>%{text}</b><br><br>"
-                "Date: %{customdata}<br>"
-                "Rank: <b>%{customdata}</b><br>"
-                "Elo Before: %{customdata}<br>"
-                "Delta: <b>%{customdata}</b><br>"
-                "New Elo: <b>%{customdata}</b>"
+                "Date: %{customdata[0]}<br>"
+                "Rank: <b>%{customdata[1]}</b><br>"
+                "Elo Before: %{customdata[2]}<br>"
+                "Delta: <b>%{customdata[3]}</b><br>"
+                "New Elo: <b>%{customdata[4]}</b>"
                 "<extra></extra>"
             ),
             text=events_list,
-            customdata=list(zip(dates_clean, ranks_list, elo_before_list, delta_list, elo_after_list))
+            # Pass dictionary-like structured tuple list to ensure zero column bleeding
+            customdata=[
+                [dates_clean[i], ranks_list[i], elo_before_list[i], delta_list[i], elo_after_list[i]]
+                for i in range(len(df_ath))
+            ]
         ))
         
         fig.add_shape(
             type="line", x0=1, y0=1500, x1=len(df_ath), y1=1500, 
-            line=dict(color="#ff6b6b", width=1.5, dash="dash") # Light red
+            line=dict(color="#ff6b6b", width=1.5, dash="dash")
         )
         
         num_ticks = min(6, len(df_ath))
@@ -186,7 +179,7 @@ try:
                 tickmode="array", 
                 tickvals=[race_numbers[idx] for idx in tick_idx], 
                 ticktext=[f"Race {race_numbers[idx]}<br>({dates_clean[idx]})" for idx in tick_idx],
-                gridcolor="#2d3139", # Dark grid
+                gridcolor="#2d3139",
                 zerolinecolor="#2d3139"
             ),
             yaxis=dict(
@@ -196,7 +189,7 @@ try:
             xaxis_title="Career Progress Timeline", 
             yaxis_title="Elo Rating Points Scale",
             hovermode="x unified", 
-            template="plotly_dark", # !!! AUTOMATIC DARK PLOTLY MAP INFRASTRUCTURE !!!
+            template="plotly_dark",
             margin=dict(l=40, r=40, t=20, b=40), 
             height=500,
             paper_bgcolor="#0e1117",
@@ -205,5 +198,3 @@ try:
         
         st.plotly_chart(fig, use_container_width=True)
 
-except Exception as e:
-    st.error(f"Critical error loading application state: {e}")
