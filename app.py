@@ -3,18 +3,38 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 
-# 1. PAGE INITIALIZATION
+# 1. PAGE INITIALIZATION (DARK THEME FOCUS)
 st.set_page_config(
     page_title="Nordic Combined Elo Live",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom text styles
+# 2. POWERFUL CSS INJECTION FOR PREMIUM DARK INTERFACE
 st.markdown("""
     <style>
-    .main-title { font-size: 36px; font-weight: bold; color: #1f77b4; margin-bottom: 20px; }
-    .section-desc { font-size: 14px; color: #666; margin-bottom: 25px; }
+    /* Force dark background on the main app content */
+    .stApp {
+        background-color: #0e1117 !important;
+        color: #e0e0e0 !important;
+    }
+    /* Style main headers and descriptions */
+    .main-title { font-size: 36px; font-weight: bold; color: #4dadf7; margin-bottom: 20px; }
+    .section-desc { font-size: 14px; color: #a0a0a0; margin-bottom: 25px; }
+    
+    /* Make standard markdown texts look sharp in dark mode */
+    h1, h2, h3, h4, p, span, label {
+        color: #ffffff !important;
+    }
+    
+    /* Style tabs container for deep integration */
+    button[data-baseweb="tab"] {
+        color: #a0a0a0 !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #4dadf7 !important;
+        font-weight: bold !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -138,15 +158,15 @@ try:
             y=elo_after_points, 
             mode="lines+markers",
             name="Elo Points", 
-            line=dict(color="#1f77b4", width=3), 
+            line=dict(color="#4dadf7", width=3), # Neon blue for dark contrast
             marker=dict(size=4),
             hovertemplate=(
                 "<b>%{text}</b><br><br>"
-                "Date: %{customdata[0]}<br>"
-                "Rank: <b>%{customdata[1]}</b><br>"
-                "Elo Before: %{customdata[2]}<br>"
-                "Delta: <b>%{customdata[3]}</b><br>"
-                "New Elo: <b>%{customdata[4]}</b>"
+                "Date: %{customdata}<br>"
+                "Rank: <b>%{customdata}</b><br>"
+                "Elo Before: %{customdata}<br>"
+                "Delta: <b>%{customdata}</b><br>"
+                "New Elo: <b>%{customdata}</b>"
                 "<extra></extra>"
             ),
             text=events_list,
@@ -155,7 +175,7 @@ try:
         
         fig.add_shape(
             type="line", x0=1, y0=1500, x1=len(df_ath), y1=1500, 
-            line=dict(color="#d62728", width=1.5, dash="dash")
+            line=dict(color="#ff6b6b", width=1.5, dash="dash") # Light red
         )
         
         num_ticks = min(6, len(df_ath))
@@ -165,14 +185,22 @@ try:
             xaxis=dict(
                 tickmode="array", 
                 tickvals=[race_numbers[idx] for idx in tick_idx], 
-                ticktext=[f"Race {race_numbers[idx]}<br>({dates_clean[idx]})" for idx in tick_idx]
+                ticktext=[f"Race {race_numbers[idx]}<br>({dates_clean[idx]})" for idx in tick_idx],
+                gridcolor="#2d3139", # Dark grid
+                zerolinecolor="#2d3139"
+            ),
+            yaxis=dict(
+                gridcolor="#2d3139",
+                zerolinecolor="#2d3139"
             ),
             xaxis_title="Career Progress Timeline", 
             yaxis_title="Elo Rating Points Scale",
             hovermode="x unified", 
-            template="plotly_white", 
+            template="plotly_dark", # !!! AUTOMATIC DARK PLOTLY MAP INFRASTRUCTURE !!!
             margin=dict(l=40, r=40, t=20, b=40), 
-            height=500
+            height=500,
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117"
         )
         
         st.plotly_chart(fig, use_container_width=True)
